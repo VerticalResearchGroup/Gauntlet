@@ -49,7 +49,9 @@ MODEL = "claude-opus-4-5-20251101"
 
 # Three temperatures give diversity within each persona.
 # Low → precise/conservative | Mid → balanced | High → creative/divergent
-TEMPERATURES: list[float] = [0.3, 0.7, 1.0]
+#TEMPERATURES: list[float] = [0.3, 0.7, 1.0]
+TEMPERATURES: list[float] = [0.3]
+
 
 # Synthesiser uses a moderate temperature; diversity comes from the
 # different review combinations fed into it, not from sampling.

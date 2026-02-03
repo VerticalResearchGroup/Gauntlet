@@ -13,29 +13,29 @@ Instead of a single review, Gauntlet explodes the solution space:
 Names below are fictitious names to just explain the readme!
 
 🗂 Project Structure
-
-Gauntlet/\
-├── inputs/\
-│   ├── proposal_call.pdf               # The funding solicitation (NSF Trailblazer)\
-│   └── my_proposal.pdf                 # The preliminary draft\
-├── personas/\
-│   ├── dr_silas_vane.md                # Chaos Control & Swarm Dynamics Expert\
-│   ├── prof_amara_kito.md              # Bio-Photonic Interfaces Expert\
-│   ├── dr_julian_rex.md                # Exascale Cognitive Systems Expert\
-│   └── synthesizer.md                  # The Strategy Lead System Prompt\
-├── outputs/\
-│   ├── RUN_CONFIG.md                   # Run metadata & naming guide\
-│   ├── expert_reviews/                 # The 9 critiques (3 personas × 3 temps)\
-│   │   ├── dr_silas_vane/              #   run_1.md  run_2.md  run_3.md\
-│   │   ├── prof_amara_kito/\
-│   │   └── dr_julian_rex/\
-│   └── syntheses/                      # 27 self-contained action-plan folders\
-│       ├── silas_1__amara_1__julian_1/ #   SYNTHESIS.md + 3 source reviews\
-│       └── …\
-├── generate_persona.py                 # Optional: auto-generates persona .md files\
-├── .env                                # ANTHROPIC_API_KEY\
-└── main.py                             # Orchestration & permutation logic\
-
+```
+Gauntlet/
+├── inputs/
+│   ├── proposal_call.pdf               # The funding solicitation
+│   └── my_proposal.pdf                 # The preliminary draft
+├── personas/
+│   ├── dr_silas_vane.md                # Chaos Control & Swarm Dynamics Expert
+│   ├── prof_amara_kito.md              # Bio-Photonic Interfaces Expert
+│   ├── dr_julian_rex.md                # Exascale Cognitive Systems Expert
+│   └── synthesizer.md                  # The Strategy Lead System Prompt
+├── outputs/
+│   ├── RUN_CONFIG.md                   # Run metadata & naming guide
+│   ├── expert_reviews/                 # The 9 critiques (3 personas × 3 temps)
+│   │   ├── dr_silas_vane/              #   run_1.md  run_2.md  run_3.md
+│   │   ├── prof_amara_kito/
+│   │   └── dr_julian_rex/
+│   └── syntheses/                      # 27 self-contained action-plan folders
+│       ├── silas_1__amara_1__julian_1/ #   SYNTHESIS.md + 3 source reviews
+│       └── …
+├── generate_persona.py                 # Optional: auto-generates persona .md files
+├── .env                                # ANTHROPIC_API_KEY
+└── main.py                             # Orchestration & permutation logic
+```
 🧠 The Expert Panel (Simulated)
 
     Dr. Silas Vane: Expert in Chaos Control & Swarm Dynamics.
@@ -100,7 +100,7 @@ If you don't want to write personas by hand, use the `generate_persona.py` scrip
     *Input:* "Deep Learning"
     *Input:* https://en.wikipedia.org/wiki/University_of_Toronto
     
-    *Result:* `personas/geoffrey_hinton.md` is created automatically.
+    *Result:* `personas/geoffrey_hinton.txt` is created automatically.
 
 📄 License
 
