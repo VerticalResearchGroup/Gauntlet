@@ -2,13 +2,13 @@
 
 Reads a baseline PDF and a seed idea (from the project config), assembles a
 system prompt from the full persona collection, and asks Gemini to produce a
-Markdown research kernel.  The human edits and converts to PDF before feeding
-it into main.py as the proposal.
+Markdown research kernel.  Automatically generates both idea_kernel.md and
+idea_kernel.pdf (requires markdown-pdf package).
 
 Usage:
     python idea_generator.py baseline.pdf
     python idea_generator.py -c config_archresearch.toml baseline.pdf
-    python idea_generator.py -c config_archresearch.toml -o kernel.md baseline.pdf
+    python idea_generator.py -c config_archresearch.toml -o output_dir/ baseline.pdf
 """
 
 import argparse
@@ -165,6 +165,22 @@ def main() -> None:
     out_file = args.output / "idea_kernel.md"
     out_file.write_text(response.text, encoding="utf-8")
     print(f"[done]    Kernel saved to: {out_file}")
+    quit()
+    # --- Convert to PDF ---
+    pdf_file = args.output / "idea_kernel.pdf"
+    try:
+        from markdown_pdf import MarkdownPdf, Section
+        print(f"[convert] Generating PDF from markdown…")
+        pdf = MarkdownPdf()
+        pdf.add_section(Section(response.text))
+        pdf.save(str(pdf_file))
+        print(f"[done]    PDF saved to: {pdf_file}")
+    except ImportError:
+        print(f"[warning] markdown-pdf not installed. Skipping PDF generation.")
+        print(f"          Install with: pip install markdown-pdf")
+    except Exception as e:
+        print(f"[warning] PDF conversion failed: {e}")
+        print(f"          Markdown file is still available at: {out_file}")
 
 
 if __name__ == "__main__":

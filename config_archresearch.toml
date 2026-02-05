@@ -4,10 +4,7 @@ synthesizer = "synthesizer_archresearch"
 # Seed idea fed to the Idea Generator (idea_generator.py).
 # Expand this as your thinking develops — it becomes the user message.
 seed = """
-We want to extend the baseline paper (ccAI).
-The problem is that ccAI uses a reactive FPGA interposer which adds latency on the critical path.
-We want to move to a CXL-based architecture and use "speculative decryption"
-based on the fact that AI compute graphs are deterministic.
+We want to extend the baseline paper. Think of address one of 3 directions: more efficient micorarchitecture, applying to larger problems, increasing the scope to more problems
 """
 
 # Expert-reviewer personas — order here controls combo-label order.

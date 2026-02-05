@@ -63,19 +63,22 @@ Gauntlet/
 
 💡 The Idea Generator (Optional Front-End)
 
-Before running the Gauntlet you can use `idea_generator.py` to produce the proposal kernel itself. It takes a baseline paper and a rough seed idea, then drafts a proposal that has already been written *against* the same expert personas — anticipating their critiques before they happen. The output is a Markdown kernel you edit and convert to PDF, then feed into the Gauntlet as your proposal. See [IDEAGEN.md](IDEAGEN.md) for the full concept and how-to.
+Before running the Gauntlet you can use `idea_generator.py` to produce the proposal kernel itself. It takes a baseline paper and a rough seed idea, then drafts a proposal that has already been written *against* the same expert personas — anticipating their critiques before they happen. The output is both a Markdown file and an auto-generated PDF. You edit the markdown if needed, then feed the PDF into the Gauntlet as your proposal. See [IDEAGEN.md](IDEAGEN.md) for the full concept and how-to.
 
 🛠 Usage
 
     Install dependencies:
     Bash
 
-    pip install anthropic pypdf python-dotenv
+    pip install anthropic pypdf python-dotenv markdown-pdf
 
-    Add your API key to .env:
+    Note: `markdown-pdf` is only needed for the Idea Generator's automatic PDF conversion.
+
+    Add your API keys to .env:
     Plaintext
 
     ANTHROPIC_API_KEY=sk-ant-...
+    GOOGLE_API_KEY=...           # Only needed for idea_generator.py
 
     Edit config.toml to select which personas and synthesizer to use.
 

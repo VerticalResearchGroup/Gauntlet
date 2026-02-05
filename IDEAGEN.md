@@ -44,12 +44,13 @@ Originator's ability to find the best framing for that insight.
 
 ## The human step is load-bearing
 
-The output is a Markdown kernel, not a submission. A human reads it, checks
-the technical claims, adds domain knowledge, and converts to PDF before it
-enters the Gauntlet. This step is deliberate: the Originator will get the
-structure and adversarial framing right, but it will also confabulate
-specifics (exact numbers, real system details, valid citations). The human
-edits those out or grounds them before the Gauntlet sees them.
+The output is both a Markdown kernel and an auto-generated PDF, not a
+submission. A human reads the markdown, checks the technical claims, adds
+domain knowledge, and edits before the PDF enters the Gauntlet. This step is
+deliberate: the Originator will get the structure and adversarial framing
+right, but it will also confabulate specifics (exact numbers, real system
+details, valid citations). The human edits those out or grounds them, then
+regenerates the PDF before the Gauntlet sees it.
 
 ## Where it sits
 
@@ -95,7 +96,7 @@ python idea_generator.py [options] <baseline.pdf>
 |---|---|---|
 | `baseline.pdf` | The prior-art / baseline paper (positional, required) | — |
 | `-c` / `--config` | Project config file | `config.toml` in the script directory |
-| `-o` / `--output` | Output directory — `idea_kernel.md` is written here | current directory |
+| `-o` / `--output` | Output directory — `idea_kernel.md` and `idea_kernel.pdf` are written here | current directory |
 
 ### Examples
 
@@ -152,14 +153,20 @@ exactly what to add.
 3. **Baseline PDF is uploaded** to Gemini and processed.
 4. **Generation runs.** The seed and the uploaded PDF are sent as the user
    message.  The Originator produces the kernel.
-5. **Output is saved** as `idea_kernel.md` in the output directory.
+5. **Output is saved** as both `idea_kernel.md` and `idea_kernel.pdf` in the
+   output directory (requires `markdown-pdf` package — if not installed, only
+   the `.md` file is created and a warning is shown).
 
 ## After you have the kernel
 
 1. Open `idea_kernel.md`.  Read it critically.
 2. Ground any confabulated specifics — numbers, citations, system details.
-3. Convert to PDF (any method: Word, Pandoc, a browser, whatever).
-4. Feed it into the Gauntlet:
+3. If you made edits, regenerate the PDF:
+   ```bash
+   python -m markdown_pdf idea_kernel.md -o idea_kernel.pdf
+   ```
+   (Or use any method: Word, Pandoc, a browser, etc.)
+4. Feed `idea_kernel.pdf` into the Gauntlet:
 
 ```bash
 python main.py -c config_archresearch.toml -o runs/ccAI \
@@ -168,3 +175,13 @@ python main.py -c config_archresearch.toml -o runs/ccAI \
 
 The `-c` flag is the same config file.  That's what keeps the two stages
 talking about the same adversaries.
+
+## Installation note
+
+The PDF auto-generation requires the `markdown-pdf` package:
+```bash
+pip install markdown-pdf
+```
+
+If not installed, the script will still run successfully and create
+`idea_kernel.md`, but you'll need to manually convert it to PDF.
