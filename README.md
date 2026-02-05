@@ -34,6 +34,7 @@ Gauntlet/
 │       └── …
 ├── generate_persona.py                 # Optional: auto-generates persona .md files
 ├── .env                                # ANTHROPIC_API_KEY
+├── config.toml                         # Persona & synthesizer selection
 └── main.py                             # Orchestration & permutation logic
 ```
 🧠 The Expert Panel (Simulated)
@@ -72,12 +73,17 @@ Gauntlet/
 
     ANTHROPIC_API_KEY=sk-ant-...
 
-    Place your PDFs in /inputs.
+    Edit config.toml to select which personas and synthesizer to use.
 
-    Run the Gauntlet:
+    Run the Gauntlet, passing your two PDFs as arguments:
     Bash
 
-    python main.py
+    python main.py inputs/proposal_call.pdf inputs/my_proposal.pdf
+
+    Use -o to write output to a custom directory:
+    Bash
+
+    python main.py -o runs/nsf_2026 inputs/proposal_call.pdf inputs/my_proposal.pdf
 
 🧬 Generator Tool (Optional)
 

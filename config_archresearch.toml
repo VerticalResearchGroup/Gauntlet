@@ -1,0 +1,26 @@
+# Synthesizer persona (personas/{name}.md)
+synthesizer = "synthesizer_archresearch"
+
+# Seed idea fed to the Idea Generator (idea_generator.py).
+# Expand this as your thinking develops — it becomes the user message.
+seed = """
+We want to extend the baseline paper (ccAI).
+The problem is that ccAI uses a reactive FPGA interposer which adds latency on the critical path.
+We want to move to a CXL-based architecture and use "speculative decryption"
+based on the fact that AI compute graphs are deterministic.
+"""
+
+# Expert-reviewer personas — order here controls combo-label order.
+# Add or remove entries to change which personas run for this project.
+[[personas]]
+name  = "dr_microarch"
+short = "micro"
+
+[[personas]]
+name  = "prof_workloads"
+short = "work"
+
+[[personas]]
+name  = "prof_simtools"
+short = "tools"
+

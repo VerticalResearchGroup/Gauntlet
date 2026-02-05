@@ -47,9 +47,6 @@ from pypdf import PdfReader
 BASE_DIR = Path(__file__).resolve().parent
 load_dotenv(BASE_DIR / ".env")
 
-with open(BASE_DIR / "config.toml", "rb") as _f:
-    _CFG = tomllib.load(_f)
-
 MODEL = "claude-opus-4-5-20251101"
 
 # Three temperatures give diversity within each persona.
@@ -65,10 +62,10 @@ SYNTH_TEMP: float = 0.5
 # SDK-level retries — handles transient 429s with exponential back-off.
 MAX_RETRIES: int = 5
 
-# Persona list, short labels, and synthesizer are driven by config.toml.
-PERSONA_ORDER: list[str]      = [p["name"] for p in _CFG["personas"]]
-PERSONA_SHORT: dict[str, str] = {p["name"]: p["short"] for p in _CFG["personas"]}
-SYNTHESIZER:   str            = _CFG["synthesizer"]
+# Populated at runtime by main() from the --config file.
+PERSONA_ORDER: list[str]
+PERSONA_SHORT: dict[str, str]
+SYNTHESIZER:   str
 
 
 # ---------------------------------------------------------------------------
@@ -269,7 +266,16 @@ def main() -> None:
     parser.add_argument("proposal_pdf", type=Path, help="your proposal PDF")
     parser.add_argument("-o", "--output", type=Path, default=BASE_DIR / "outputs",
                         help="output directory (default: <script dir>/outputs)")
+    parser.add_argument("-c", "--config", type=Path, default=BASE_DIR / "config.toml",
+                        help="project config file (default: <script dir>/config.toml)")
     args = parser.parse_args()
+
+    global PERSONA_ORDER, PERSONA_SHORT, SYNTHESIZER
+    with open(args.config, "rb") as f:
+        cfg = tomllib.load(f)
+    PERSONA_ORDER  = [p["name"] for p in cfg["personas"]]
+    PERSONA_SHORT  = {p["name"]: p["short"] for p in cfg["personas"]}
+    SYNTHESIZER    = cfg["synthesizer"]
 
     out_root = args.output
     if out_root.exists() and any(out_root.iterdir()):
