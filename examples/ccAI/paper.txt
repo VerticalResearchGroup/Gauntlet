@@ -1,2 +1,0 @@
-Paper used: ccAI: A Compatible and Confidential System for AI Computing
-Use pdf from: https://dl.acm.org/doi/epdf/10.1145/3725843.3756104
