@@ -174,7 +174,7 @@ def phase2(
 
         # --- resume: skip if synthesis AND all copied source reviews are valid ---
         source_copies_ok = all(
-            is_valid_output(out_dir / f"{p}_review.md")
+            is_valid_output(out_dir / f"{Path(p).name}_review.md")
             for p in PERSONA_ORDER
         )
         if is_valid_output(synth_file) and source_copies_ok:
@@ -214,7 +214,9 @@ def phase2(
         # Copy the 3 source reviews that fed this combo into the folder.
         for persona, run_idx in zip(PERSONA_ORDER, combo):
             src = out_root / "expert_reviews" / persona / f"run_{run_idx}.md"
-            shutil.copy2(src, out_dir / f"{persona}_review.md")
+            # Use basename to handle personas in subdirectories (e.g., "reading_assistant/dr_foo" → "dr_foo")
+            persona_basename = Path(persona).name
+            shutil.copy2(src, out_dir / f"{persona_basename}_review.md")
 
     print(f"\n  -> phase 2 complete\n")
 
