@@ -1,0 +1,20 @@
+# Synthesizer persona (personas/{name}.md)
+synthesizer = "reading_assistant/synthesizer_paper_analyst"
+
+# Expert-reviewer personas — order here controls combo-label order.
+# Add or remove entries to change which personas run for this project.
+[[personas]]
+name  = "reading_assistant/dr_microarch_reader"
+short = "micro"
+
+[[personas]]
+name  = "reading_assistant/prof_workloads_reader"
+short = "work"
+
+[[personas]]
+name  = "reading_assistant/prof_simtools_reader"
+short = "tools"
+
+[[personas]]
+name  = "reading_assistant/chief_architect"
+short = "CA"
