@@ -43,6 +43,8 @@ MODEL = "claude-opus-4-5-20251101"
 TEMPERATURE: float = 0.5
 MAX_RETRIES: int = 5
 MAX_REPAIR_ATTEMPTS: int = 3  # Max iterations for verify-repair loops
+INITIAL_MAX_TOKENS: int = 16384  # Starting token limit for model generation
+MAX_TOKENS_LIMIT: int = 50000  # Absolute upper limit (Claude's context window) is 200000
 
 
 # ---------------------------------------------------------------------------
@@ -314,11 +316,16 @@ def phase2_implement_model(
     paper_text: str,
     spec_text: str,
     model_implementer_prompt: str,
-    out_dir: Path
-) -> str:
-    """Implement analytical model based on spec."""
+    out_dir: Path,
+    max_tokens: int = INITIAL_MAX_TOKENS
+) -> tuple[str, bool]:
+    """Implement analytical model based on spec.
+
+    Returns:
+        tuple[str, bool]: (model_code, was_truncated)
+    """
     print("\n[Phase 2.1] Implementing analytical model...")
-    print("            Agent: Vector (model_implementer)")
+    print(f"            Agent: Vector (model_implementer, max_tokens={max_tokens})")
 
     user_message = f"""You have been provided with a Mathematical Specification by Prof. Aximo.
 Your task is to implement this as a self-contained Python script.
@@ -334,16 +341,21 @@ Please generate the complete Python script (`model.py`) that implements this spe
 
     response = client.messages.create(
         model=MODEL,
-        max_tokens=16384,
+        max_tokens=max_tokens,
         temperature=TEMPERATURE,
         system=model_implementer_prompt,
         messages=[{"role": "user", "content": user_message}],
     )
 
     model_code = extract_code_from_markdown(response.content[0].text)
-    print(f"            ✓ Generated")
+    was_truncated = response.stop_reason == "max_tokens"
 
-    return model_code
+    if was_truncated:
+        print(f"            ⚠ WARNING: Output truncated (hit max_tokens limit)")
+    else:
+        print(f"            ✓ Generated")
+
+    return model_code, was_truncated
 
 
 def phase2_verify_functional(
@@ -501,14 +513,31 @@ def run_phase2_loop(
 ) -> str:
     """Run Phase 2 verify-repair loop until model is approved."""
 
-    # Generate initial implementation
-    model_code = phase2_implement_model(
-        client,
-        paper_text,
-        spec_text,
-        personas['model_implementer'],
-        out_dir
-    )
+    # Generate initial implementation (with auto-retry if truncated)
+    max_tokens = INITIAL_MAX_TOKENS
+    was_truncated = True
+
+    while was_truncated and max_tokens <= MAX_TOKENS_LIMIT:
+        model_code, was_truncated = phase2_implement_model(
+            client,
+            paper_text,
+            spec_text,
+            personas['model_implementer'],
+            out_dir,
+            max_tokens=max_tokens
+        )
+
+        if was_truncated:
+            # Increase by 50% and retry
+            old_tokens = max_tokens
+            max_tokens = int(max_tokens * 1.5)
+            print(f"            → Retrying with {max_tokens} tokens (was {old_tokens})")
+        else:
+            break
+
+    if was_truncated:
+        print(f"            ⚠ WARNING: Still truncated even at {max_tokens} tokens!")
+        print(f"            Proceeding anyway, but model may be incomplete.")
 
     # Save initial draft as version 1
     draft_file = out_dir / "model_draft_v1.py"
