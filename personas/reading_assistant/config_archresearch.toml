@@ -1,0 +1,27 @@
+# Synthesizer persona (personas/{name}.md)
+synthesizer = "reading_assistant/synthesizer_paper_analyst"
+
+# Seed idea fed to the Idea Generator (idea_generator.py).
+# Expand this as your thinking develops — it becomes the user message.
+seed = """
+I have attached a detailed proposal. Refine through the lens of the different personas. But this is itself a well developed idea.
+"""
+
+# Expert-reviewer personas — order here controls combo-label order.
+# Add or remove entries to change which personas run for this project.
+[[personas]]
+name  = "reading_assistant/dr_microarch_reader"
+short = "micro"
+
+[[personas]]
+name  = "reading_assistant/prof_workloads_reader"
+short = "work"
+
+[[personas]]
+name  = "reading_assistant/chief_architect"
+short = "CA"
+
+[[personas]]
+name  = "reading_assistant/sparsity_aware_machine_learning_accelerators"
+short = "expert"
+
