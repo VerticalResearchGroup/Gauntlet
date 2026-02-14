@@ -1,0 +1,43 @@
+# Configuration for perf.py — Quantitative Performance Evaluator
+# Three-phase verify-repair pipeline
+
+# ============================================================================
+# The Constitution (prepended to all agents)
+# ============================================================================
+prime_directive = "personas/quant_eval/PRIME_DIRECTIVE.md"
+
+# ============================================================================
+# Phase 1: Specification Loop (Text → Math)
+# ============================================================================
+
+# Prof. Aximo - Extracts math from text
+spec_generator = "personas/quant_eval/spec_generator.md"
+
+# Dr. Logic - Audits the math for completeness
+spec_verifier = "personas/quant_eval/spec_verifier.md"
+
+# Prof. Aximo (Correction Mode) - Repairs the spec based on critique
+spec_repair = "personas/quant_eval/spec_repair.md"
+
+# ============================================================================
+# Phase 2: Implementation Loop (Math → Python)
+# ============================================================================
+
+# Vector - Translates math into Python
+model_implementer = "personas/quant_eval/model_implementer.md"
+
+# QA Engineer - Verifies syntax and logic match the spec
+functional_verifier = "personas/quant_eval/functional_verifier.md"
+
+# PI - Verifies Prime Directive compliance
+directive_verifier = "personas/quant_eval/directive_verifier.md"
+
+# Vector (Debug Mode) - Repairs the model based on critiques
+model_repair = "personas/quant_eval/model_repair.md"
+
+# ============================================================================
+# Phase 3: Interpretation (Python → Insight)
+# ============================================================================
+
+# Technical Communicator - Explains results to humans
+model_interpreter = "personas/quant_eval/model_interpretter.md"
