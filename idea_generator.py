@@ -1,24 +1,26 @@
 """Idea Generator — Gauntlet front-end.
 
 Reads a baseline PDF and a seed idea (from the project config), assembles a
-system prompt from the full persona collection, and asks Gemini to produce a
-Markdown research kernel.  Automatically generates both idea_kernel.md and
-idea_kernel.pdf (requires markdown-pdf package).
+system prompt from the full persona collection, and asks either Gemini or
+Claude to produce a Markdown research kernel.  Automatically generates both
+idea_kernel.md and idea_kernel.pdf (requires markdown-pdf package).
 
 Usage:
     python idea_generator.py baseline.pdf
     python idea_generator.py -c config_archresearch.toml baseline.pdf
     python idea_generator.py -c config_archresearch.toml -o output_dir/ baseline.pdf
+    python idea_generator.py --provider claude baseline.pdf
+    python idea_generator.py --provider claude --model claude-opus-4-5-20251101 baseline.pdf
 """
 
 import argparse
+import base64
 import os
 import sys
 import time
 import tomllib
 from pathlib import Path
 
-import google.generativeai as genai
 from dotenv import load_dotenv
 
 # ---------------------------------------------------------------------------
@@ -27,7 +29,10 @@ from dotenv import load_dotenv
 BASE_DIR = Path(__file__).resolve().parent
 load_dotenv(BASE_DIR / ".env")
 
-MODEL_NAME = "gemini-2.5-pro"
+DEFAULT_MODELS = {
+    "gemini": "gemini-2.5-pro",
+    "claude": "claude-opus-4-5-20251101",
+}
 
 
 # ---------------------------------------------------------------------------
@@ -49,20 +54,6 @@ def load_persona(name: str) -> str:
     return text
 
 
-def upload_to_gemini(path: Path, mime_type: str = "application/pdf"):
-    """Upload a file to Gemini and wait for it to finish processing."""
-    print(f"  uploading '{path}'…", end="", flush=True)
-    file = genai.upload_file(str(path), mime_type=mime_type)
-    while file.state.name == "PROCESSING":
-        print(".", end="", flush=True)
-        time.sleep(1)
-        file = genai.get_file(file.name)
-    if file.state.name == "FAILED":
-        raise ValueError(f"Upload failed: {file.state.name}")
-    print("  ready.")
-    return file
-
-
 def build_system_prompt(personas: list[str], synthesizer: str) -> str:
     """Assemble the Originator system prompt from the persona collection.
 
@@ -82,7 +73,7 @@ a **Robust Research Kernel** — a high-quality proposal.
 
 **THE GAUNTLET CONTEXT:**
 Your output is NOT the final paper. It will be brutally critiqued by the experts
-listed below. You must write your proposal to **anticipate and pre-empt** 
+listed below. You must write your proposal to **anticipate and pre-empt**
 objections they are likely to raise.
 
 **KNOW YOUR ADVERSARIES:**
@@ -108,6 +99,116 @@ Rigorous, specific, and ambitious.  Avoid vague marketing fluff."""
 
 
 # ---------------------------------------------------------------------------
+# Gemini provider
+# ---------------------------------------------------------------------------
+
+def generate_with_gemini(
+    baseline_pdf: Path,
+    system_prompt: str,
+    seed: str,
+    model_name: str,
+) -> str:
+    """Generate a research kernel using the Gemini API."""
+    try:
+        import google.generativeai as genai
+    except ImportError:
+        sys.exit("ERROR: google-generativeai not installed. "
+                 "Install with: pip install google-generativeai")
+
+    api_key = os.getenv("GOOGLE_API_KEY")
+    if not api_key:
+        sys.exit("ERROR: GOOGLE_API_KEY not set. Check your .env file.")
+    genai.configure(api_key=api_key)
+
+    # Upload PDF and wait for processing.
+    print(f"[upload]  Uploading baseline PDF to Gemini…", end="", flush=True)
+    pdf_file = genai.upload_file(str(baseline_pdf), mime_type="application/pdf")
+    while pdf_file.state.name == "PROCESSING":
+        print(".", end="", flush=True)
+        time.sleep(1)
+        pdf_file = genai.get_file(pdf_file.name)
+    if pdf_file.state.name == "FAILED":
+        raise ValueError(f"Upload failed: {pdf_file.state.name}")
+    print("  ready.")
+
+    print(f"[generate] Producing research kernel with {model_name}…")
+    model = genai.GenerativeModel(
+        model_name=model_name,
+        system_instruction=system_prompt,
+    )
+    response = model.generate_content(
+        [pdf_file,
+         f"Here is the Baseline Paper (PDF).\n\n"
+         f"Here is the Seed Idea:\n{seed}\n\n"
+         f"Generate the Research Proposal Kernel."],
+        generation_config={"temperature": 0.7},
+    )
+    return response.text
+
+
+# ---------------------------------------------------------------------------
+# Claude provider
+# ---------------------------------------------------------------------------
+
+def generate_with_claude(
+    baseline_pdf: Path,
+    system_prompt: str,
+    seed: str,
+    model_name: str,
+) -> str:
+    """Generate a research kernel using the Anthropic API.
+
+    Claude accepts PDFs inline as base64 document content blocks — no separate
+    upload / polling step is needed.
+    """
+    try:
+        from anthropic import Anthropic
+    except ImportError:
+        sys.exit("ERROR: anthropic not installed. "
+                 "Install with: pip install anthropic")
+
+    api_key = os.getenv("ANTHROPIC_API_KEY")
+    if not api_key:
+        sys.exit("ERROR: ANTHROPIC_API_KEY not set. Check your .env file.")
+    client = Anthropic(api_key=api_key, max_retries=5)
+
+    print(f"[load]    Reading baseline PDF: {baseline_pdf}")
+    if not baseline_pdf.exists():
+        raise FileNotFoundError(f"PDF not found: {baseline_pdf}")
+    pdf_b64 = base64.standard_b64encode(baseline_pdf.read_bytes()).decode("utf-8")
+
+    print(f"[generate] Producing research kernel with {model_name}…")
+    response = client.messages.create(
+        model=model_name,
+        max_tokens=8192,
+        temperature=0.7,
+        system=system_prompt,
+        messages=[{
+            "role": "user",
+            "content": [
+                {
+                    "type": "document",
+                    "source": {
+                        "type": "base64",
+                        "media_type": "application/pdf",
+                        "data": pdf_b64,
+                    },
+                },
+                {
+                    "type": "text",
+                    "text": (
+                        "Here is the Baseline Paper (attached above).\n\n"
+                        f"Here is the Seed Idea:\n{seed}\n\n"
+                        "Generate the Research Proposal Kernel."
+                    ),
+                },
+            ],
+        }],
+    )
+    return response.content[0].text
+
+
+# ---------------------------------------------------------------------------
 # Entry point
 # ---------------------------------------------------------------------------
 
@@ -121,7 +222,13 @@ def main() -> None:
                         help="project config file (default: <script dir>/config.toml)")
     parser.add_argument("-o", "--output", type=Path, default=Path("."),
                         help="output directory (default: current directory)")
+    parser.add_argument("--provider", choices=["gemini", "claude"], default="gemini",
+                        help="LLM provider for generation (default: gemini)")
+    parser.add_argument("--model", type=str, default=None,
+                        help="override the default model name for the chosen provider")
     args = parser.parse_args()
+
+    model_name = args.model or DEFAULT_MODELS[args.provider]
 
     # --- Config ---
     with open(args.config, "rb") as f:
@@ -133,37 +240,24 @@ def main() -> None:
         sys.exit(f'ERROR: "seed" key missing from {args.config}.\n'
                  'Add a multiline  seed = """…"""  entry to your config.')
 
-    # --- API key ---
-    api_key = os.getenv("GOOGLE_API_KEY")
-    if not api_key:
-        sys.exit("ERROR: GOOGLE_API_KEY not set. Check your .env file.")
-    genai.configure(api_key=api_key)
-
-    # --- Build prompt & upload baseline ---
+    # --- Build prompt ---
     print("[setup]   Building system prompt…")
     system_prompt = build_system_prompt(personas, synthesizer)
 
-    print("[upload]  Uploading baseline PDF…")
-    pdf_file = upload_to_gemini(args.baseline_pdf)
-
     # --- Generate ---
-    print("[generate] Producing research kernel…")
-    model = genai.GenerativeModel(
-        model_name=MODEL_NAME,
-        system_instruction=system_prompt,
-    )
-    response = model.generate_content(
-        [pdf_file,
-         f"Here is the Baseline Paper (PDF).\n\n"
-         f"Here is the Seed Idea:\n{seed}\n\n"
-         f"Generate the Research Proposal Kernel."],
-        generation_config={"temperature": 0.7},
-    )
+    if args.provider == "claude":
+        response_text = generate_with_claude(
+            args.baseline_pdf, system_prompt, seed, model_name
+        )
+    else:
+        response_text = generate_with_gemini(
+            args.baseline_pdf, system_prompt, seed, model_name
+        )
 
     # --- Save ---
     args.output.mkdir(parents=True, exist_ok=True)
     out_file = args.output / "idea_kernel.md"
-    out_file.write_text(response.text, encoding="utf-8")
+    out_file.write_text(response_text, encoding="utf-8")
     print(f"[done]    Kernel saved to: {out_file}")
     quit()
     # --- Convert to PDF ---
@@ -172,7 +266,7 @@ def main() -> None:
         from markdown_pdf import MarkdownPdf, Section
         print(f"[convert] Generating PDF from markdown…")
         pdf = MarkdownPdf()
-        pdf.add_section(Section(response.text))
+        pdf.add_section(Section(response_text))
         pdf.save(str(pdf_file))
         print(f"[done]    PDF saved to: {pdf_file}")
     except ImportError:
